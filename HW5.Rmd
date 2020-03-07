@@ -1,0 +1,208 @@
+---
+title: "Stat 5201 - Assignment 5"
+author: "Bailey Perry"
+date: "October 27, 2017"
+output: pdf_document
+---
+# Textbook problems:
+General information -- Cluster Sampling Exercises.
+
+## 1. Chapter 5 - Problem 11:
+Accounting firm interested in estimating the error rate in a compliance audit it is conducting. Population contains 828 firms, and the firm audits an SRS of 85 of those firms. In each of the 85 sampled firms, 215 fields are checked for errors.
+
+###part (a)
+```{r}
+#Estimate the error rate
+#Using equations 5.1 and 5.4 from the book
+n <- 85
+N <- 828
+M <- 215
+#The N from t-hat cancels with the 1/N in the formula for ybar thus:
+ybhat <- (1/(n*M))*(4+3+8+22)
+#Where 4,3,8,22 comes from 1 claim 4 errors, 1 claim 3 errors, 4 claims 
+# 2 errors, and 22 claims 1 error (57 with 0 errors)
+ybhat
+
+#Then we make a vector containing all of the errors per claim
+tvector <- c(4,3,2,2,2,2,rep(1,22),rep(0,57))
+
+#Then find st^2 = (1/(n-1))*sum((ti-(that/N))^2)
+#From formula 5.4 we know that that/N = ybar*M so we sub that in to the below
+st2 <- (1/(n-1))*sum((tvector-(ybhat*M))^2)
+
+#Standard error for the estimate
+#Given from book formula on page 171
+# SE = (1/M)*sqrt((1-n/N)*(st^2/n))
+seybar <- (1/M)*sqrt((1-(n/N))*(st2/n))
+seybar
+```
+Therefore we find that the estimate for the average number of errors per field (error rate) is approximately 0.002 errors. Additionally, the standard error for the estimate is approximately 0.00036.
+
+###part (b)
+```{r}
+#Estimate the total # of errors in the 828 claims
+#We will use equation 5.1 for this (t-hat)
+that <- (N/n)*sum(tvector)
+that
+
+#Standard error for the estimate
+#This is given by SE = N*sqrt((1-n/N)*(st^2/n)) - equation 5.3 in the book
+sethat <- N*sqrt((1-(n/N))*(st2/n))
+sethat
+```
+Therefore we find that the estimate for the total number of errors in the 828 claims is approximately 360.4 errors. Additionally, the standard error for the estimate is approximately 63.57.
+
+###part (c)
+```{r}
+#Suppose instead that it is an SRS of 85*215 = 18,275 fields
+#From the 178,020 fields in the population
+#If the estimated error rate is same as part a, what is the estimate var?
+n1 <- 18275
+N1 <- 178020
+newerror <- (4+3+8+22)/n1
+newerror
+
+#We want V(pSRS)
+# We can use the formula: V[psrs] = (1-(n/N))*((p*(1-p))/n-1)
+varp <- (1-(n1/N1))*((newerror*(1-newerror))/(n1-1))
+varp
+
+#Variance for part a
+vara <- (seybar)^2
+vara
+```
+Thus we see that the estimated variance of V[psrs] is approximately 9.92e-08, whereas the estimated variance for the calculations done in part a was approximately 1.27-07.
+
+Therefore in order to compare the variances, we can see the ratio of them:
+```{r}
+ratio <- vara/varp
+ratio
+```
+This ratio is the relationship between the variance under cluster design and the variance under SRS. We see that the variance under SRS is smaller. 
+
+##2. Chapter 5 - Problem 12:
+Use the data coots.dat to estimate the average egg length, along with its standard error. Be sure to plot the data appropriately.
+
+```{r, message=FALSE, warning=FALSE}
+#Use the data file coots.dat
+library("RCurl")
+x<-getURL("http://users.stat.umn.edu/~gmeeden/classes/5201/lohrdata/coots.txt", userpw = "goldy:gopher")
+myData<-read.table(textConnection(x), header=T)
+#View(myData)
+```
+
+```{r}
+#Clusters of unequal sizes with 2 sampled from each cluster
+#Using the online code from Meeden's page with changing the necessary values
+egglen <- myData$LENGTH
+clutch <- myData$CLUTCH
+csize <- myData$CSIZE
+
+foo<-split(egglen,clutch)
+nclus<-length(foo)
+dum<-split(csize,clutch)
+mi<-sapply(dum,length)
+Mi<-sapply(dum,mean)
+
+ssufpc<-1-(mi/Mi)
+clusmean<-sapply(foo,mean)
+clusvar<-sapply(foo,var)
+N<-184
+
+ybarratio<-sum(Mi*clusmean)/sum(Mi) #Formula 5.26 from the book
+
+varterm2<-sum(ssufpc*(Mi^2)*clusvar/mi) #Formula for second part of 5.28
+s2r<-var(Mi*(clusmean - ybarratio))
+
+varybarr<-((1 - nclus/N)*s2r/nclus + varterm2/(nclus*N))/((mean(Mi))^2)
+#Above is Formula 5.28 from the book
+
+list(yratio=ybarratio,varyratio=varybarr)
+seybarr <- sqrt(varybarr)
+seybarr
+```
+Thus we find that the estimated average egg length is approximately 48.65. The variance for the estimate is approximately 0.003, and thus the standard error for the estimate is approximately 0.054.
+
+##3. Chapter 5 - Problem 14(a):
+Estimate the percentage of female high school students in the region who smoke, along with a 95% confidence interval.
+
+```{r}
+#Estimate the percentage who smoke
+#Using his code again with manipulation for the problem
+## Follows the same formulas from the book as listed above ##
+N1<-29
+nclus1<-4
+mi1<-c(25,15,20,40)
+Mi1<-c(792,447,511,800)
+smokers<-c(10,3,6,27) 
+prop <- smokers/mi1
+
+ssufpc<-1-(mi1/Mi1)
+clusmean<-mean(prop)
+clusvar<-var(prop)
+
+ybarratio<-sum(Mi1*clusmean)/sum(Mi1)
+varterm2<-sum(ssufpc*(Mi1^2)*clusvar/mi1)
+s2r<-var(Mi1*(clusmean - ybarratio))
+varybarr<-( (1 - nclus1/N1)*s2r/nclus1 + varterm2/(nclus1*N1) )/(mean(Mi1))^2
+list(yratio=ybarratio,varyratio=varybarr)
+
+#Now for the confidence interval
+lower <- ybarratio - 1.96*(sqrt(varybarr))
+upper <- ybarratio + 1.96*(sqrt(varybarr))
+lower; upper
+```
+The estimated percentage of female students who smoke, in the region, is equal to approximately 39%. The 95% confidence interval for this is approximately [37.9%, 40.9%].
+
+##4. Chapter 5 - Handwritten Problem:
+An inspector samples cans from a truckload of canned creamed corn to
+estimate the average number of worm fragments per can. The truck has 580
+cases, each case contains 24 cans. The inspector samples 12 cases at random
+and subsamples 3 cans at random from each selected case.
+
+```{r}
+#Estimate the mean number of worm fragments per can
+##Two stage Cluster Sampling
+
+#Using his code again with manipulation for the problem
+## Input the known values for the problem as their variable
+N<- 580
+nclus<-12
+mi<-3
+Mi<-24
+## Hardcoded data entry for each of the cases as from the given table ##
+col1 <- c(1,5,7)
+col2 <- c(4,2,4)
+col3 <- c(0,1,2)
+col4 <- c(3,6,6)
+col5 <- c(4,9,8)
+col6 <- c(0,7,3)
+col7 <- c(5,5,1)
+col8 <- c(3,0,2)
+col9 <- c(7,3,5)
+col10 <- c(3,1,4)
+col11 <- c(4,7,0)
+col12 <- c(0,0,0)
+
+#Compute necessary datapoints for the formulae
+clusmean <- c(mean(col1), mean(col2), mean(col3), mean(col4), mean(col5), mean(col6), mean(col7), mean(col8), mean(col9), mean(col10), mean(col11), mean(col12))
+#clusmean
+clusvar <- c(var(col1), var(col2), var(col3), var(col4), var(col5), var(col6), var(col7), var(col8), var(col9), var(col10), var(col11), var(col12))
+#clusvar
+
+ssufpc<-1-(mi/Mi)
+ybarratio<-sum(Mi*clusmean)/sum(Mi)
+varterm2<-sum(ssufpc*(Mi^2)*clusvar/mi)
+s2r<-var(Mi*(clusmean - ybarratio))
+varybarr<-((1 - nclus/N)*s2r/nclus + varterm2/(nclus*N))/((mean(Mi))^2)
+
+list(yratio=ybarratio/24,varyratio=varybarr/24) 
+#These values above are divided by 24 because our analysis was per CASE
+#And we want it per can, ie 24 cans in a case
+
+#Give the standard error of your estimate
+seybarr <- sqrt(varybarr/24)
+seybarr
+```
+
+Thus we see that the estimated mean number of worm fragments per can is approximately 1.7. The standard error for the estimate is approximately 0.112.

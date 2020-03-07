@@ -1,0 +1,181 @@
+---
+title: "Stat 5201 - Assignment 6"
+author: "Bailey Perry"
+date: "December 4, 2017"
+output: pdf_document
+---
+# Textbook Problem:
+General information -- Sampling with Unequal Probabilities Exercises.
+
+## 1. Chapter 6 - Problem 4:
+For the supermarket example in 6.1, show the population total is unbiased, and find it's variance. Do you think this sampling scheme is a good one?
+
+Handwritten solution. Posted to moodle separately.
+
+# Handwritten Problem:
+Consider a population where x is a random sample from some distribution and y is generated from x using the following relationship... All details are included on the homework online.
+
+The assignment also discusses the HT estimator, and the formulas behind that. The following parts are in relation to this information.
+
+```{r}
+getans<-function(est,stnderr,truetot)
+{
+  err<-abs(est-truetot)
+  lwbd<-est -1.96*stnderr
+  upbd<-est + 1.96*stnderr
+  if(lwbd <= truetot & truetot <= upbd) { cov<-1}
+  else {cov<-0}
+  ans<-c(est,err,lwbd,upbd - lwbd,cov)
+  return(ans)
+}
+srstot<-function(smp,popy)
+{
+  n<-length(smp)
+  N<-length(popy)
+  fpc<-1-n/N
+  ysmp<-popy[smp]
+  est<-N*mean(ysmp)
+  stnderr<-N*sqrt((fpc/n)*var(ysmp))
+  ans<-getans(est,stnderr,sum(popy))
+  return(ans)
+}
+ratiotot<-function(smp,popy,popx)
+{
+        n <- length(smp)
+        N<-length(popx)
+        ff<-n/N
+        ysamp<-popy[smp]
+        xsamp<-popx[smp]
+        tx<-sum(popx)
+        trtot<-sum(popy)
+        rhat <- sum(ysamp)/sum(xsamp)
+        est <- rhat * tx
+        dum1<-(N*N*(1-ff))/(n*(n-1))
+        vartot <- dum1*sum((ysamp-rhat*xsamp)^2)
+        stnderr<-sqrt(vartot)
+         ans<-getans(est,stnderr,sum(popy))
+        return(ans)
+}
+
+
+httot<-function(smp,popy,designwts)
+{
+  wts<-designwts[smp]
+  est<-sum(wts*popy[smp])
+  n<-length(smp)
+  dum<-sum((n*wts*popy[smp] - est)^2)
+  stnderr<-sqrt((1/(n*(n-1))*dum))
+  ans<-getans(est,stnderr,sum(popy))
+  return(ans)
+}
+
+
+compar3est<-function(popy,popx,design,n)
+{
+  designwts<-sum(design)/(n*design)
+  smp<-sample(1:length(popy),n,replace=FALSE,prob=design)
+  anssrs<-srstot(smp,popy)
+  ansHT<-httot(smp,popy,designwts)
+  ansratio<-ratiotot(smp,popy,popx)
+  ans<-rbind(anssrs,ansHT,ansratio)
+  return(ans)
+}
+
+compar3estlp<-function(popy,popx,design,n,R)
+{
+  ans<-matrix(0,3,5)
+  for(i in 1:R){
+    ans<-ans + compar3est(popy,popx,design,n)
+  }
+  ans<-round(ans/R,digits=3)
+  return(ans)
+}
+
+#change this code for part c analysis
+set.seed(2004)
+popx<-rlnorm(500,10,.4)
+hist(popx)
+popy<-rnorm(500,0.1*popx,3*sqrt(popx))
+plot(popx,popy)
+sum(popy)
+cor(popx,popy)
+n<-50
+R<-500
+design<-popx
+compar3estlp(popy,popx,design,n,R)
+design<-rep(1,length(popy)) 
+compar3estlp(popy,popx,design,n,R)
+```
+For each estimator it returns its average value, average absolute error, the average lower bound and length of the nominal 95% confidence interval and the proportions of intervals which contained the true population total of y.
+
+###part (a)
+For the example in the handout with design<-popx, we see that both the ratio estimator and HT estimator do much better than the usual estimator. Explain.
+
+Answer: The Horvitz-Thompson estimator performs better than the usual estimator because it takes into account both the inclusion probability and joint inclusion probability. This helps with accuracy, and bringing the variance down, thus increasing performance. The Ratio estimator also does much better than the usual estimator because the sampling distribution of the ratio estimator is less variable, and thus it also has a smaller MSE. The usual estimator here uses PPS sampling.
+
+###part (b)
+For the example in the handout with design<-rep(1,length(popy)), we see that the usual estimator and the HT estimator behave about the same. Explain.
+
+Answer: So when we use the given code, this changes the usual estimator to being based on SRS without replacement (versus PPS above). Due to this the sampling design for the usual estimator and the HT estimator yield very similar results because the inclusion probabilities for the HT estimator will all be the same when using SRS.
+
+###part (c)
+For the example in the handout and other choices of the design, I found situations where the average absolute error of the HT estimator was 4 times as large as the average absolute error of the ratio estimator. Find a design for which this happens.
+```{r}
+#change this code for part c analysis
+set.seed(2004)
+popx<-rlnorm(500,10,.6)
+hist(popx)
+popy<-rnorm(500,0.1*popx,3*sqrt(popx))
+plot(popx,popy)
+sum(popy)
+cor(popx,popy)
+n<-50
+R<-500
+design<-popx
+compar3estlp(popy,popx,design,n,R)
+design<-rep(1,length(popy)) 
+compar3estlp(popy,popx,design,n,R)
+```
+
+Answer: Based on the directions from Professor Meeden, considering changing the function of popx as possible designs was key to finding the design where the absolute errors were in such differing magnitudes. Doing this, it was discovered that sampling from a log normal distribution with mean=10 and variance=0.6 provided the above values for the absolute error. The absolute error for HT was 101322.45, and for ratio estimator was 25735.54, a magnitude difference of about 3.937.
+
+###part (d)
+The correlation between popy and popx for the example in the handout is 0.92. Construct two new populations, one with correlation around 0.60 and the other with correlation around 0.30, where the ratio estimator and the HT estimator behave similarly when the design is popx but the ratio estimator outperforms the HT estimator for another design.
+```{r}
+#change this code for part d analysis; 
+## specifically the correlation needs to change to 0.6 first
+set.seed(2004)
+popx<-rlnorm(500,10,.4)
+hist(popx)
+popy<-rnorm(500,0.1*popx,11*sqrt(popx))
+plot(popx,popy)
+sum(popy)
+cor(popx,popy)
+n<-50
+R<-500
+#Behave similary here
+design<-popx
+compar3estlp(popy,popx,design,n,R)
+#Behave differently here; ratio outperform HT
+design<-rep(1,length(popy)) 
+compar3estlp(popy,popx,design,n,R)
+
+#correlation to 0.3
+set.seed(2004)
+popx<-rlnorm(500,10,.4)
+hist(popx)
+popy<-rnorm(500,0.05*popx,18*sqrt(popx))
+plot(popx,popy)
+sum(popy)
+cor(popx,popy)
+n<-50
+R<-500
+#Behave similary here
+design<-popx
+compar3estlp(popy,popx,design,n,R)
+#Behave differently here; ratio outperform HT
+design<-rep(1,length(popy)) 
+compar3estlp(popy,popx,design,n,R)
+```
+
+Answer: For changing the correlation to 0.60, the popy was changed to popy<-rnorm(500,0.1*popx,11*sqrt(popx)). In this it was seen that the two estimators behaved similarly for when the design is popx (close estimates and abs error), but the ratio estimator outperforms the HT estimator for the new design because it had a closer estimate to the true value, and a smaller absolute error value. For changing the correlation to 0.30, the popy was changed to popy<-rnorm(500,0.05*popx,18*sqrt(popx)), a change in both mean and variance here. Again it follows the required performance metrics set out in the problem statement, and we focus on the changes in both estimate and absolute error. In the second scenario ratio outperforms HT in both areas, and that is why this design change works for the problem.

@@ -1,0 +1,209 @@
+---
+title: "Stat 5201 - Assignment 4"
+author: "Bailey Perry"
+date: "October 20, 2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Textbook problems:
+General information -- Ratio Estimation Exercises.
+
+## 1. Chapter 4 - Problem 8:
+The data agsrs contains information on the number of farms in 1987 for the SRS of n=300 counties from the population of the N=3078 counties in the US. In 1987, the US had a total of 2,087,759 farms. 
+```{r, message=FALSE, warning=FALSE}
+#Use the data file agsrs.dat
+library("RCurl")
+x<-getURL("http://users.stat.umn.edu/~gmeeden/classes/5201/lohrdata/agsrs.txt", userpw = "goldy:gopher")
+myData<-read.table(textConnection(x), header=T)
+#View(myData)
+```
+
+###part a)
+Plot the data.
+```{r}
+#Plots of the farms by county and by state
+plot(myData$FARMS87~myData$COUNTY)
+plot(myData$FARMS87~myData$STATE)
+
+#Then plot Acres92 and Farms87
+plot(myData$ACRES92~myData$FARMS87)
+```
+The plot of acres in 1992 versus farms in 1987 shows a weak relationship.
+
+###part b)
+Use ratio estimation to estimate the total number of acres devoted to farming in 1992, using the nuber of farms in 1987 as the auxiliary variable.
+```{r}
+smpratiotot<-function(ysamp,xsamp,N,tx)
+{
+        n <- length(ysamp)
+        ff<-n/N
+        rhat <- sum(ysamp)/sum(xsamp)
+        esttot <- rhat * tx
+        dum1<-(N*N*(1-ff))/(n*(n-1))
+        vartot <- dum1*sum((ysamp-rhat*xsamp)^2)
+        dum<-1.96*sqrt(vartot)
+        lwbd<-esttot - dum
+        upbd<-esttot + dum
+        ans<-c(esttot,lwbd,upbd)
+        return(ans)
+}
+ysamp<-myData$ACRES92
+xsamp<-myData$FARMS87
+N<-3078
+tx<-2087759
+smpratiotot(ysamp,xsamp,N,tx)
+```
+The ratio estimate for total number of farms devoted to farming in 1992 is 960,155,061 farms. The 95% confidence interval for this estimate is [832040009, 1088270113].
+
+###part c)
+Repeat part (b), using regression estimation.
+```{r}
+smpregtot<-function(ysamp,xsamp,N,tx)
+  {
+    mnpopx<-tx/N
+    n <- length(xsamp)
+    ff <- n/N
+    out <- lsfit(xsamp, ysamp)
+    bb<-as.numeric(out$coef)
+    res <- out$residuals
+    mnxsamp <- mean(xsamp)
+    mnysamp <- mean(ysamp)
+    esttot <- N*(mnysamp + bb[2] * (mnpopx - mnxsamp))
+     dum1 <- N*N*((1 - ff)/(n*(n-2)))
+    estvr <- dum1*sum(res * res)
+    lwbd <- esttot - 1.96 * sqrt(estvr)
+    upbd <-esttot + 1.96 * sqrt(estvr)
+      ans<-c(esttot,lwbd,upbd)
+    return(ans)
+  }
+ysamp<-myData$ACRES92
+xsamp<-myData$FARMS87
+N<-3078
+tx<-2087759
+smpregtot(ysamp,xsamp,N,tx)
+```
+The ratio estimate for total number of farms devoted to farming in 1992 is 921,406,265 farms. The 95% confidence interval for this estimate is [807406476, 1035406054].
+
+###part d)
+Which method gives the most precision: ratio estimation with auxiliary variable acres87, ratio estimation with auxiliary variable farms87, or regression estimation with auxiliary variable farms87? Why?
+
+```{r}
+smpratiotot<-function(ysamp,xsamp,N,tx)
+{
+        n <- length(ysamp)
+        ff<-n/N
+        rhat <- sum(ysamp)/sum(xsamp)
+        esttot <- rhat * tx
+        dum1<-(N*N*(1-ff))/(n*(n-1))
+        vartot <- dum1*sum((ysamp-rhat*xsamp)^2)
+        dum<-1.96*sqrt(vartot)
+        lwbd<-esttot - dum
+        upbd<-esttot + dum
+        ans<-c(esttot,lwbd,upbd)
+        return(ans)
+}
+ysamp<-myData$ACRES92
+xsamp<-myData$ACRES87
+N<-3078
+tx<-964470625
+smpratiotot(ysamp,xsamp,N,tx)
+
+cor(myData$ACRES92, myData$ACRES87)
+```
+For this problem, I have added in the ratio estimation using Acres87 as the auxiliary variable. From this analysis, we see that not only is the confidence interval much narrower (and thus introducing more precision), but the Acres92 and Acres87 variable have very high correlation. This means overall, Acres87 would be a better predictor for Acres92, on top of being direct comparison between units (acres to acres). Therefore, the most precise method is ratio estimation with the auxiliary variable Acres87.
+
+## 2. Chapter 4 - Problem 9:
+Use the same data file as in problem 8. Estimate the total number of acres devoted to farming for each of the following domains. Give standard errors for your estimates.
+
+###part a)
+Counties with fewer than 600 farms.
+```{r}
+#Separate that part of the data for preliminary investigation
+myDatal6 <- myData[myData$FARMS92 < 600,]
+#View(myDatal6)
+```
+
+```{r}
+#Follow the formulas from pages 134-5
+#Split the domain and have 1's and 0's for the values
+y <- NA
+for (i in 1:300){
+  if(myData$FARMS92[i]<600)
+    y[i] <- myData$ACRES92[i]
+    else y[i] <- 0
+}
+#View(y)
+
+#ui=y
+#ubar is the tu=sum(ui)=sum(y) above divided by n=300
+ubar <- sum(y)/300
+ubar
+
+#that(yd) = N*ubar, where N=3078
+tyd <- N*ubar
+tyd
+```
+
+```{r}
+#To get the value for s^2(u), use the similar function for s^2(yd)
+#Thus the formula is (sum(ui-ubar)^2)/(n-1)
+inner <- (y-ubar)^2 
+num2 <- sum(inner)
+den2 <- 299
+s2u <- num2/den2
+s2u
+
+#Then we can find the standard error for this
+#The formula is on page 135, setotal = (N)*(sqrt((1-n/N))*(s2(u)/sqrt(n)))
+#use N from above and n=300
+setd <- N*sqrt(1-(300/N))*(sqrt(s2u)/sqrt(300))
+setd
+```
+Therefore, the estimate for the total number of acres devoted to farming, for the domain of counties with fewer than 600 farms, is equal to 497,939,808 acres. The standard error of the estimate is 55,919,525. 
+
+###part b)
+Counties with 600 or more farms.
+```{r}
+#Preliminary investigation again
+myDatau6 <- myData[myData$FARMS92 >= 600,]
+#View(myDatau6)
+```
+
+```{r}
+#Split the domain and have 1's and 0's for the values
+y1 <- NA
+for (i in 1:300){
+  if(myData$FARMS92[i]>=600)
+    y1[i] <- myData$ACRES92[i]
+    else y1[i] <- 0
+}
+#View(y)
+
+#ui=y
+#ubar is the tu=sum(ui)=sum(y1) above divided by n=300
+ubar1 <- sum(y1)/300
+ubar1
+
+#that(yd) = N*ubar, where N=3078
+tyd1 <- N*ubar1
+tyd1
+```
+
+```{r}
+#To get the value for s^2(u), use the similar function for s^2(yd)
+#Thus the formula is (sum(ui-ubar)^2)/(n-1)
+inner1 <- (y1-ubar1)^2 
+num3 <- sum(inner1)
+den3 <- 299
+s2u1 <- num3/den3
+s2u1
+
+#Then we can find the standard error for this
+#The formula is on page 135, setotal = (N)*(sqrt((1-n/N))*(s2(u)/sqrt(n)))
+#use N from above and n=300
+setd1 <- N*sqrt(1-(300/N))*(sqrt(s2u1)/sqrt(300))
+setd1
+```
+Therefore, the estimate for the total number of acres devoted to farming, for the domain of counties with fewer than 600 farms, is equal to 418,987,302 acres. The standard error of the estimate is 38,938,277.

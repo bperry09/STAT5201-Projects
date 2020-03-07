@@ -1,0 +1,35 @@
+---
+title: "Stat 5201 - Assignment 1"
+author: "Bailey Perry"
+date: "September 25, 2017"
+output: pdf_document
+---
+
+# Textbook problems:
+Describe the target population, sampling frame, sampling unit, and observation unit for each of the following problems. Discuss any possible sources of bias or inaccuracy.
+
+## 1. Chapter 1 - Problem 2:
+The target population is the complete collection of mutual funds. The sampling frame is the mutual funds that are listed in the Mutual Funds section of the newspaper. The sampling unit is mutual funds, and the observation unit is mutual funds that had share price increase. The possible bias from this study arises from the fact that every 10th fund is sampled. This is not quite random, and if the mutual funds have any type of pattern to their arrangement in the listings, this could occur in the sample too. Additionally, since she is sampling from the newspaper, she is limiting her population to only mutual funds that can afford to have their company listed in the paper, and this means the study is less generalizable.
+
+## 2. Chapter 1 - Problem 7:
+The target population is the complete collection of cows in the region. The sampling frame is the farms in the region that are listed. The sampling unit is cows, and the observation unit is their average weights. This study isolates their sample to a specific region so the results are solely generalizable to that area, but they use random sampling which is an effective way to try and obtain insight regarding the cows (and their weights) on the other regional farms.
+
+## 3. Chapter 1 - Problem 8:
+The target population is the complete collection of boarding homes in Washington State. The sampling frame is 184 licensed boarding homes whose addresses were available. The sampling unit is menus, and the observation unit is their nutrient content. This study has many possible issues. First, they mailed out surveys so only homes that had accessible addresses could be sent a survey in the first place. Also, surveys are notorious for having issues such as non-response bias or even possibly response bias if the questions in the survey are not posed in an appropriate manner. Finally, only 43 surveys were returned, which shows that often mail surveys are neglected and non-response can be an issue.
+
+## Problem 4 (written):
+The target population is the complete collection of users of HMO's. The sampling frame is the magazine subscribers. The sampling unit is the reader/consumers, and the observation unit is the satisfaction ratings for various HMO's used by the readers. The specific issue with this sampling design is that the subscribers who write in the responses come from more affluent backgrounds (noted in the problem statement), and thus likely have access to better health organizations in the first place. This eliminates many organizations that may receive lower ratings, because affluent people can afford better care. Additionally, this raises the issue of response bias. People may be responding to the questionnaire with extreme viewpoints, such as a terrible or glowing review depending on the experience. From this and the fact that it has a biased sample of health organizations from the beginning, I do not believe that it is a good source for comparing health plans (particularly for persons with less education or income).
+
+## Problem 5:
+###Joint Distribution of X and Y given in a table.
+
+a) Find the marginal distributions of X and Y:
+(This is done by taking the sums of the rows and columns.)
+
+b) Are X and Y independent? We can find this by checking if P(x,y) is equal to the multiplication of the marginal probabilities for all x and y.
+
+c) Find E[X], E[Y], E[4X-2Y]
+
+d) Find E[XY], Cov(XY), Var(X-3Y)
+
+##All of the above for problem 5 was done by hand and is attached in this turn it in as a photograph of the work. I also will turn in the hard copy on Monday.

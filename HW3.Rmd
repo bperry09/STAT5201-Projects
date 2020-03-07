@@ -1,0 +1,277 @@
+---
+title: "Stat 5201 - Assignment 3"
+author: "Bailey Perry"
+date: "October 13, 2017"
+output: pdf_document
+---
+# Textbook problems:
+General information -- Stratified Sampling Exercises.
+
+## 1. Chapter 3 - Problem 6:
+A city has 90,000 dwelling units: 35,000 are houses, 45,000 are apartments, and 10,000 are condominiums.
+
+###part a)
+How would you allocate a stratified sample of 900 observations if you wanted to estimate the mean electricity consumption for all households?
+```{r}
+#Mean electricity usage is 2(A or C) = H
+#Standard deviation is proportional - S1 = 2S2 = 2S3
+h <- 35000
+a <- 45000
+c <- 10000
+n <- 900
+#I would use optimal allocation
+#We will arbitrarily use S1 = 2 and S2=S3=1 because the relationship
+# of the standard deviations is what matters
+n1 <- ((h*2)/((h*2)+(a*1)+(c*1)))*n
+n2 <- ((a*1)/((h*2)+(a*1)+(c*1)))*n
+n3 <- ((c*1)/((h*2)+(a*1)+(c*1)))*n
+n1; n2; n3
+```
+
+###part b)
+Now suppose you use proportional allocation, and you want to estimate the overall proportion of households in which energy conservation is practiced.
+```{r}
+#From the book, we know that the p value is: sum((Nh/N)*ph)
+t <- 90000
+n1prop <- (h/t)
+n2prop <- (a/t)
+n3prop <- (c/t)
+#45% houses, 25% apartments, 3% condos practice conservation
+conserve <- (0.45*n1prop) + (0.25*n2prop) + (0.03*n3prop)
+conserve
+```
+Thus, p for the population is equal to approximately 30.33%.
+
+```{r}
+#What is V(prop)(pstr)/V(SRS)(pstr)?
+Varp <- ((1-(n1/h))*(n1prop^2)*(conserve*(1-conserve)))+((1-(n2/a))*(n2prop^2)*(conserve*(1-conserve)))+((1-(n3/c))*(n3prop^2)*(conserve*(1-conserve)))
+#above formula from page 81, except the nh-1 does not need to be involved
+# because it is a population proportion, so we do not need to correct for
+# a sample
+Varp
+
+Varsrs <-(1-(n/t))*(conserve*(1-conserve))
+Varsrs
+#above formula from page 59, except the n-1 does not need to be involved
+# because it is a population proportion, so we do not need to correct for
+# a sample
+
+#Then we need to divide them
+gain <- Varp/Varsrs
+gain
+```
+The gainis then equal to 0.4136. This means that we would expect that we would need only 900(0.413)=373 (rounding up) samples with a stratified sample to obtain the same precision from an SRS with sample size 900.
+
+## 2. Chapter 3 - Problem 9(a):
+```{r}
+#Use the data file agstrat.dat
+library("RCurl")
+x<-getURL("http://users.stat.umn.edu/~gmeeden/classes/5201/lohrdata/agstrat.txt", userpw = "goldy:gopher")
+myData<-read.table(textConnection(x), header=T)
+#View(myData)
+```
+
+```{r}
+#Plot the data, estimate the population mean for the 1987 acreage
+## The column we want is "ACRES87" and "REGION"
+plot(myData$ACRES87)
+#This is the more informative plot that shows information by region 
+plot(myData$ACRES87~myData$REGION)
+```
+
+```{r}
+#Also estimate the standard error and a 95% confidence interval
+
+#Sample mean estimation code
+foo<-split(myData$ACRES87, myData$REGION)
+foo
+popsize <- 1054+220+1382+422
+popsize
+stratsizes <- c(1054, 220, 1382, 422)
+stratsizes
+WW <- stratsizes/popsize
+WW
+stratmns<-sapply(foo,mean) #sample means for the strata
+stratmns
+
+#Confidence interval code
+est<-sum(WW*stratmns)
+est
+smpvar<-sapply(foo,var)
+smpvar
+smpsizes <- sapply(foo, length)
+ratiosmptopop<-smpsizes/stratsizes
+ratiosmptopop
+estvarofest<-sum((WW^2)*(1-ratiosmptopop)*(1/smpsizes)*smpvar)
+SEofest<-sqrt(estvarofest)
+SEofest
+lwbd<-est - 1.96*SEofest
+upbd<-est + 1.96*SEofest
+c(lwbd,upbd)
+```
+
+## 3. Chapter 3 - Problem 10:
+Clam distribution in Rhode Island. Divided into 4 strata, see the given table that holds all of the relevant data values.
+
+###part a)
+Estimate the total number of bushels of clams in the area, and the standard error for this estimate.
+```{r}
+N1 <- 25.6*222.81 
+N2 <- 25.6*49.61
+N3 <- 25.6*50.25
+N4 <- 25.6*197.81
+
+#We can use the estimate for t (strata) from the book on page 82 which is:
+# Sum(Nh*ybar(h)), where ybarh is given in the table
+estt <- (N1*0.44)+(N2*1.17)+(N3*3.92)+(N4*1.80)
+estt
+
+#Then to get the standard error for this, we use the defined formula
+# V(tstr) = sum(1-nh/Nh)*Nh^2*(S^2/nh) and then sqrt it
+Vart <- ((1-(4/N1))*(N1^2)*((0.068)/4))+((1-(6/N2))*(N2^2)*((0.042)/6))+
+  ((1-(3/N3))*(N3^2)*((2.146)/3))+((1-(5/N4))*(N4^2)*((0.794)/5))
+Vart
+se <- sqrt(Vart)
+se
+```
+Thus we see that the total number of bushels is estimated to be 18153.42, and the standard error of the estimate is 2411.035.
+
+###part b)
+Stratums 1-3 collapsed into one stratum. Find mean and standard error now.
+```{r}
+Nt <- 25.6*322.67 
+N4 <- 25.6*197.81
+
+#We can use the estimate for t (strata) from the book on page 82 which is:
+# Sum(Nh*ybar(h)), where ybarh is given in the table
+estt1 <- (Nt*0.63)+(N4*0.40)
+estt1
+
+#Then to get the standard error for this, we use the defined formula
+# V(tstr) = sum(1-nh/Nh)*Nh^2*(S^2/nh) and then sqrt it
+Vart1 <- ((1-(8/Nt))*(Nt^2)*((0.083)/8))+((1-(5/N4))*(N4^2)*((0.046)/5))
+Vart1
+se1 <- sqrt(Vart1)
+se1
+```
+The estimated total number of bushels now updates to 7229.596 bushels, and the standard error of the estimate is 971.04.
+
+## 4. Chapter 3 - Problem 12:
+Using the estimated variances in Example 3.2, and assuming costs are the same in each stratum, find an optimal allocation of size 300.
+```{r}
+#Inputting necessary data from Example 3.2 data
+vNE <- 7647472708
+vNC <- 29618183543
+vS <- 53587487856
+vW <- 396185950266
+NEstr <- 220
+NCstr <- 1054
+Sstr <- 1382
+Wstr <- 422
+```
+
+```{r}
+#Optimal Allocation, size 300
+nNE <- ((NEstr*sqrt(vNE))/((NEstr*sqrt(vNE))+(NCstr*sqrt(vNC))+(Sstr*sqrt(vS))+(Wstr*sqrt(vW))))*300
+nNC <- ((NCstr*sqrt(vNC))/((NEstr*sqrt(vNE))+(NCstr*sqrt(vNC))+(Sstr*sqrt(vS))+(Wstr*sqrt(vW))))*300
+nS <- ((Sstr*sqrt(vS))/((NEstr*sqrt(vNE))+(NCstr*sqrt(vNC))+(Sstr*sqrt(vS))+(Wstr*sqrt(vW))))*300
+nW <- ((Wstr*sqrt(vW))/((NEstr*sqrt(vNE))+(NCstr*sqrt(vNC))+(Sstr*sqrt(vS))+(Wstr*sqrt(vW))))*300
+
+nNE; nNC; nS; nW
+```
+
+## 5. Chapter 3 - Problem 13:
+Select a stratified random sample of size 300 from the data in the file agpop.dat, using your allocation from exercise 12 (above). Estimate the total number of acres devoted to farming in the US (also give standard error). How does the standard error compare to that found in Ex 3.2?
+```{r}
+#Use the data file agpop.dat
+library("RCurl")
+x<-getURL("http://users.stat.umn.edu/~gmeeden/classes/5201/lohrdata/agpop.txt", userpw = "goldy:gopher")
+myData1<-read.table(textConnection(x), header=T)
+#View(myData1)
+```
+
+```{r}
+set.seed(123)
+strat <- split(myData1$ACRES92, myData1$REGION)
+ncsmp <- sample(strat$NC, nNC)
+nesmp <- sample(strat$NE, nNE)
+ssmp <- sample(strat$S, nS)
+wsmp <- sample(strat$W, nW)
+ncm <- mean(ncsmp)
+nem <- mean(nesmp)
+sm <- mean(ssmp) 
+wm <- mean(wsmp)
+ncm; nem; sm; wm
+
+#Now we sum the mean times the stratum population
+total <- (NEstr*nem)+(NCstr*ncm)+(Sstr*sm)+(Wstr*wm)
+total
+```
+Thus we have found that the estimated total number of acres devoted to farming in the US is 887,425,315 acres.
+
+```{r}
+#Now to get the standard error for the estimate
+NE <- (1-(nNE/NEstr))*NEstr^2*(var(nesmp)/nNE)
+NC <- (1-(nNC/NCstr))*NCstr^2*(var(ncsmp)/nNC)
+S <- (1-(nS/Sstr))*Sstr^2*(var(ssmp)/nS)
+W <- (1-(nW/Wstr))*Wstr^2*(var(wsmp)/nW)
+Vart1 <- NE+NC+S+W
+Vart1
+se1 <- sqrt(Vart1)
+se1
+
+#Example 3.2 Variance and SE
+var32 <- 2.5419*(10^15)
+se32 <- sqrt(var32)
+se32
+```
+Thus we see that the standard error of the estimate is 46682443. This compares to the standard error in 3.2 by being slightly smaller, but similar magnitude. The example SE is outputted as 50417259.
+
+## 6. Chapter 3 - Problem 16:
+Otter dens along the coast of Shetland, UK. 242 sections (5 km), each assigned to a stratum based on terrain. Random sampling from the strata. Dens were counted for each of the sections chosen. Data is summarized in a table.
+
+###part a)
+Estimate the total number of otter dens in Shetland (also give se).
+```{r}
+#Use the data file otters.txt
+library("RCurl")
+x<-getURL("http://users.stat.umn.edu/~gmeeden/classes/5201/lohrdata/otters.txt", userpw = "goldy:gopher")
+otters<-read.table(textConnection(x), header=T)
+#View(otters)
+```
+
+```{r}
+holts <- split(otters$HOLTS, otters$HABITAT)
+holts
+h1m <- mean(holts$`1`)
+h2m <- mean(holts$`2`)
+h3m <- mean(holts$`3`) 
+h4m <- mean(holts$`4`)
+h1m; h2m; h3m; h4m
+
+#Now we sum the mean times the stratum population which is given in the
+# table in the book
+total1 <- (89*h1m)+(61*h2m)+(40*h3m)+(47*h4m)
+total1
+```
+The estimated total number of otter dens in Shetland, UK is 984.7142 dens.
+
+```{r}
+#Now to get the standard error for the estimate
+h1 <- (1-(19/89))*89^2*(var(holts$`1`)/19)
+h2 <- (1-(20/61))*61^2*(var(holts$`2`)/20)
+h3 <- (1-(22/40))*40^2*(var(holts$`3`)/22)
+h4 <- (1-(21/47))*47^2*(var(holts$`4`)/21)
+Vart2 <- h1+h2+h3+h4
+Vart2
+se2 <- sqrt(Vart2)
+se2
+```
+The standard error for the estimate found above is 73.92099.
+
+###part b)
+Discuss possible sources of bias in this study. Do you think it is possible to avoid all selection and measurement bias?
+
+No, the first possible source of bias that stood out to me was that the dominant terrain type was how the sections were assigned to stratum. In this, it does not highlight any scientific ways of determining what the dominant terrain is, and thus it is dependent on human eye or the decision making of humans. That introduces human error in itself. Additionally, they only used data for the 237 sections that were not predominantly buildings. Although it is reasonable to assume a lack or limited number of dens in those 5 sections, it is still important to sample there, otherwise the data is not generalizable to that part of the coastline. 
+
+I do not believe it is possible to avoid all selection and measurement bias, there are too many working parts to consider in studies, and often times something small can account for unexpected bias.

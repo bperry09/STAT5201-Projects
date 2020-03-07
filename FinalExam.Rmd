@@ -1,0 +1,437 @@
+---
+title: "Stat 5201 - Final Exam"
+author: "Bailey Perry, ID# 4895940"
+date: "Due: December 18, 2017"
+header-includes:
+    - \usepackage{fancyhdr}
+    - \pagestyle{fancy}
+    - \fancyhead[CO,CE]{Bailey Perry}
+output: pdf_document
+---
+
+# Problem 3
+
+## Problem 3 - Part 1:
+```{r}
+load(url("http://users.stat.umn.edu/~gmeeden/classes/5201/datasets/glen.rda"))
+#View(glen)
+varsystematic<-function(y,n,k)
+{
+  N<-length(y)
+  if(N!=n*k) stop("length(y) does not equal n times k")
+  dum<-seq(1,(n-1)*k + 1, k)
+  mn<-mean(y)
+  ans<-0
+  for(i in 1:k){
+    ans<-ans + (mean(y[dum + (i-1)]) - mn)^2
+  }
+  ans.sys<-ans/(k-1)
+  ans.srs<-(1-n/N)*var(y)/n
+  return(c(ans.sys,ans.srs))
+}
+y<-glen[,1] #save the first column as y since we are interested in sales
+varsystematic(y,60,9.95) #for y,n,k (k=N/n)
+```
+We take the second value as the variance of the sample mean under simple random sampling without replacement for a sample of size n = 60, which is thus equal to 276.42596. The k value of 9.95 is calculated from 597/60.
+
+##Problem 3 - Part 2:
+```{r}
+#Save the stratum as separate vectors to get the variance/sd of each
+str1 <- y[1:300]
+sd1 <- sqrt(var(str1))
+
+str2 <- y[301:500]
+sd2 <- sqrt(var(str2))
+
+str3 <- y[501:597]
+sd3 <- sqrt(var(str3))
+```
+
+```{r}
+#Neyman allocation formulas - page 89 of the textbook
+N1 <- 300
+N2 <- 200
+N3 <- 97
+n <- 60
+#now find the nh's using sd values above as Sh
+#The formulas here are: nh = [(Nh*Sh)/summation(Nh*Sh)]*n
+#This was done by splitting the formula into chunks as follows
+denom <- (N1*sd1)+(N2*sd2)+(N3*sd3)
+n1 <- ((N1*sd1)/denom)*n
+n2 <- ((N2*sd2)/denom)*n
+n3 <- ((N3*sd3)/denom)*n
+n1;n2;n3
+```
+This output is the optimal allocation.
+
+```{r}
+#Now find the variance of this estimator (ybarstr)
+#This formula is the summation[(Wh^2)*(1-nh/Nh)*(1/nh)*sigma2h]
+#Where Wh = Nh/N
+N <- 597
+W1 <- N1/N
+W2 <- N2/N
+W3 <- N3/N
+term1 <- (W1^2)*(1-(n1/N1))*(1/n1)*var(str1)
+term2 <- (W2^2)*(1-(n2/N2))*(1/n2)*var(str2)
+term3 <- (W3^2)*(1-(n3/N3))*(1/n3)*var(str3)
+varystr <- term1+term2+term3 
+varystr
+```
+This output is the variance of the estimator.
+
+##Problem 3 - Part 3:
+
+```{r}
+#Use the ratio estimation formulas from class on 10/4
+#Ybar = Rhat*Xbar
+#Var(Rhat*Xbar) is estimated by ((1-f)/n)*summation([(yi-Rhat*xi)^2]/(n-1))
+#f = n/N (where n is the SRS size, aka 60 here, N=597)
+
+#Create sample of 60 values
+set.seed(468)
+index <- sample(1:597, 60, replace=FALSE)
+smp <- glen[index,]
+#View(smp)
+
+#Then find the necessary values for the above variance formula
+Rhat <- mean(smp[,1])/mean(smp[,2])
+numerator <- (smp[,1]-(Rhat*smp[,2]))
+num2 <- numerator^2
+n <- 60
+term1 <- sum(num2/(n-1))
+#Need to multiply by (1-f)/n
+N <- 597
+term2 <- (1-(n/N))/n
+#Now multiply them together
+RatioEstVar <- term1*term2
+RatioEstVar
+```
+The estimated variance for this Ratio Estimator is therefore equal to 116.92 based on my simple random sample of 60 from the dataset. It is known that Rhat multiplied by Xbar (ratio estimation) is an approximately unbiased estimate of Ybar which is what we are interested in. That is why the formula for estimating the Var(Rhat*Xbar) is valid here for finding the required variance.
+
+\newpage
+# Problem 4
+
+##Problem 4 - Part 1:
+Again use the house sales data used in problem 3.
+```{r}
+#Need to save tax first
+tax <- glen[,2]
+
+#Run given 3 lines of code
+set.seed(878787)
+smp1<-sort(sample(1:597,30))
+smp2<-sort(sample(1:597,30,prob=tax))
+```
+
+```{r}
+#For smp2 give the value of the Horvitz-Thompson estimator for the population
+# total of the house sales and its estimate of variance.
+
+#Used code from class, and edited to only have HT answers returned
+#Updated with the values pertaining to the sales dataset
+getans<-function(est,stnderr,truetot)
+{
+  err<-abs(est-truetot)
+  lwbd<-est -1.96*stnderr
+  upbd<-est + 1.96*stnderr
+  if(lwbd <= truetot & truetot <= upbd) { cov<-1}
+  else {cov<-0}
+  ans<-c(est,err,lwbd,upbd - lwbd,cov, (stnderr^2))
+  #We also need to output stnderr and square it to find the variance
+  return(ans)
+}
+
+httot<-function(smp,popy,design)
+{
+  designwts<-sum(design)/(n*design)
+  wts<-designwts[smp]
+  est<-sum(wts*popy[smp])
+  n<-length(smp)
+  dum<-sum((n*wts*popy[smp] - est)^2)
+  stnderr<-sqrt((1/(n*(n-1))*dum))
+  ans<-getans(est,stnderr,sum(popy))
+  return(ans)
+}
+
+n<-30
+sales <- glen[,1]
+tax <- glen[,2]
+#Call the function
+httot(smp2, sales, tax) 
+#smp2 is our sample, sales is our population, tax is the weights
+```
+The HT estimator is therefore equal to 158386.568.
+
+The variance is equal to stnderr^2 or as calculated 22602066.16.
+
+##Problem 4 - Part 2:
+For each of the two samples find the ratio estimate of the population total and their estimates of variance. I will use the handout code that compares model based and the usual variances for the Ratio Estimator (for SRS without replacement).
+```{r}
+ratiototboth<-function(smp,popy,popx)
+{
+        n <- length(smp)
+        N<-length(popx)
+        ff<-n/N
+        ysamp<-popy[smp]
+        xsamp<-popx[smp]
+        xnsamp<-popx[-smp]
+        tx<-sum(popx)
+        trtot<-sum(popy)
+        rhat <- sum(ysamp)/sum(xsamp)
+        esttot <- rhat * tx
+        err<-abs(esttot - trtot)
+        dum1<-(N*N*(1-ff))/(n*(n-1))
+        usualvartot <- dum1*sum((ysamp-rhat*xsamp)^2)
+        usualans<-c(esttot,err,usualvartot)
+        dum2<-sum(((ysamp -rhat*xsamp)^2/xsamp))*((mean(xnsamp)
+              *mean(popx))/mean(xsamp))
+        modelvartot<-dum1*dum2
+        ans<-c(esttot,err,usualvartot,modelvartot)
+         return(ans)
+}
+
+ratiototboth(smp1, sales, tax)
+ratiototboth(smp2, sales, tax)
+```
+The first output is the ratio estimate for the population total, then the third column is the usual estimate of variance, and finally the fourth column is the model-based estimate of variance. The first row applies to smp1 and the second row applies to smp2. Thus all of the necessary information has been derived.
+
+\newpage
+# Problem 5
+
+```{r}
+#Create the vectors of data to call by name
+sales <- glen[,1]
+tax <- glen[,2]
+
+#Edit comparison code from class handouts
+getans<-function(est,stnderr,truetot)
+{
+  err<-abs(est-truetot)
+  lwbd<-est -1.96*stnderr
+  upbd<-est + 1.96*stnderr
+  if(lwbd <= truetot & truetot <= upbd) { cov<-1}
+  else {cov<-0}
+  ans<-c(est,err,lwbd,upbd - lwbd,cov)
+  return(ans)
+}
+
+#Normal HT Estimator code
+httot<-function(smp,popy,designwts)
+{
+  wts<-designwts[smp]
+  est<-sum(wts*popy[smp])
+  n<-length(smp)
+  dum<-sum((n*wts*popy[smp] - est)^2)
+  stnderr<-sqrt((1/(n*(n-1))*dum))
+  ans<-getans(est,stnderr,sum(popy))
+  return(ans)
+}
+
+#Add in code for calibration in the data weights
+library(quadprog)
+calibrate<-function(wt,x,totx,N)
+{
+  ns<-length(wt)
+  mxcnst<-cbind(sqrt(wt*x),sqrt(wt/x))
+  Dmat<-diag(ns)
+  dvec<-sqrt(wt*x)
+  Amat<-cbind(mxcnst,diag(ns))
+  bvec<-c(totx,N,rep(1,ns)) #rep(1,ns) is lower bd for final weights .
+  meq<-2 #this makes the first two constraints equality constraints
+  # Use the next four lines when debugging so you can see the error message.
+  # out<-solve.QP(Dmat,dvec,Amat,bvec=bvec,meq)
+  # return(out)
+  # ans<-out$solution*sqrt(wt/x)
+  # return(ans)
+  out<-try(solve.QP(Dmat,dvec,Amat,bvec=bvec,meq),silen=TRUE)
+  if(inherits(out,"try-error")){return(NULL)}
+  else{
+    nwt<-out$solution*sqrt(wt/x)
+    return(nwt)
+  }
+  }
+
+chttot<-function(smp,popy,designwts)
+{
+  wts <- calibrate(designwts[smp], tax[smp], sum(tax), 597) 
+  #constrain the weights; calibrate HT estimate
+  est<-sum(wts*popy[smp])
+  n<-length(smp)
+  dum<-sum((n*wts*popy[smp] - est)^2)
+  stnderr<-sqrt((1/(n*(n-1))*dum))
+  ans<-getans(est,stnderr,sum(popy))
+  return(ans)
+}
+
+srsCtot<-function(smp,popy) #edited to also be calibrated
+{
+  n<-length(smp)
+  N<-length(popy)
+  fpc<-1-n/N
+  wts <- calibrate(c(rep(597/30,30)), tax[smp], sum(tax), 597)
+  #constrain the weights (original weight is N/n)
+  ysmp<-wts*popy[smp]
+  est<-sum(ysmp)
+  stnderr<-N*sqrt((fpc/n)*var(ysmp))
+  ans<-getans(est,stnderr,sum(popy))
+  return(ans)
+}
+
+#Estimate comparison code
+compar3est<-function(popy,popx,design,n)
+{
+  designwts<-sum(design)/(n*design)
+  smp<-sample(1:length(popy),n,replace=FALSE,prob=design)
+  anssrsC<-srsCtot(smp,popy) #Update naming for calibrated SRS
+  ansHT<-httot(smp,popy,designwts)
+  ansCHT<-chttot(smp,popy,designwts) #Add in calibrated HT
+  ans<-rbind(anssrsC, ansHT, ansCHT)
+  return(ans)
+}
+
+compar3estlp<-function(popy,popx,design,n,R)
+{
+  ans<-matrix(0,3,5)
+  for(i in 1:R){
+    ans<-ans + compar3est(popy,popx,design,n)
+  }
+  ans<-round(ans/R,digits=3)
+  return(ans)
+}
+
+set.seed(2004)
+popx<-tax
+popy<-sales
+n<-30
+R<-500
+
+#Design pps using x
+design<-popx
+compar3estlp(popy,popx,design,n,R)
+
+#Design reverse using x
+design<-rev(popx)
+compar3estlp(popy,popx,design,n,R)
+
+#Design using SRS without replacement
+design<-rep(1,length(popy))
+compar3estlp(popy,popx,design,n,R)
+```
+For each estimator I needed to compute its average value and average
+absolute error for 500 samples taken using the design. To do this, R was set equal to 500, and then the code was updated with the required population and calibration requirements.
+
+The output gives the estimated average value (total estimate) first, and then the average absolute error in the second column (of the 500 samples).
+
+\newpage
+# Problem 6
+
+##Problem 6 - Part 1:
+```{r, warning=FALSE, message=FALSE}
+library(polyapost)
+library(gtools)
+```
+Again the population of interest is the population of house sales used in problem three. In this case we are interested in estimating the median of the price of the houses sold. For 500 samples of size 30, where the sampling design is simple random sampling without replacement, find the point estimate and 95% confidence interval for the median based on the polya posterior. Also find the average absolute error of your point estimate and the frequency of coverage of your interval estimate.
+```{r}
+#Using sales data again
+polyasim<-function(ysmp,N)
+{
+  n<-length(ysmp)
+  dans<-1:n
+  simpop<-ysmp
+  for( i in 1:(N-n)){
+    dum<-sample(dans,1)
+    dans<-c(dans,dum)
+    simpop<-c(simpop,simpop[dum])
+    }
+  return(simpop)
+}
+
+set.seed(444)
+medians <- NULL
+variance <- NULL
+for (i in 1:500){
+  index <- sample(1:597, 30, replace=FALSE)
+  smp <- glen[index,]
+  ysmp <- smp[,1]
+  sim <- polyasim(ysmp, 597) #simulated copy of the population
+  medians[i] <- median(sim)
+  #for the confidence interval; keep track of the variances
+  variance[i] <- var(sim)
+  }
+medians <- data.frame(medians)
+#View(medians)
+pointest <- sum(medians)/500
+pointest
+
+#Find the 95% confidence interval
+avgvar <- sum(variance)/500
+se <- sqrt(avgvar)
+upper <- pointest + (se*1.96) #use 1.96 for 95% confidence
+lower <- pointest - (se*1.96)
+lower; upper #since the lower bound goes to negative, we set it to zero
+#standard pratice since price cannot be a negative number
+```
+Thus from the code above, I have found the point estimate for the median price of houses sold to be equal to 236.2155 (in thousands of dollars) for 500 samples
+of size 30. Then the calculated 95% confidence interval is found to be [0,  494.5594] again in thousands of dollars.
+
+```{r}
+#Find average absolute error
+#To do this take the FULL dataset and find the median
+obspointest <- median(sales)
+#use pointest as the simulated point estimate
+mae <- function(error){
+    mean(abs(error))
+}
+error <- obspointest-pointest
+abserr <- mae(error)
+abserr
+```
+The average absolute error of the point estimate is output from the above code, and is approximately  1.21546. In terms of the frequency of coverage of the interval estimate, since it was a 95% confidence interval, the simulated data coverage should hover right around 95%. There may be some fluctuations for this because the samples are only of size 30, but since there were 500 samples, this assists with improving the estimate and therefore improving the confidence interval. 
+
+##Problem 6 - Part 2:
+Next do the problem, but now use pps sampling proportional to tax as your design. In this case you will need to use the function wtpolyap that is described in the R handout "usingpolyapost"" on the class web page.
+```{r}
+wts <- smp[,2] #set the original wts to tax
+#Now apply the weights to the data
+set.seed(444)
+medians <- NULL
+variance <- NULL
+for (i in 1:500){
+  index <- sample(1:597, 30, replace=FALSE)
+  smp <- glen[index,]
+  ysmp <- smp[,1]
+  out <- wtpolyap(ysmp, wts, 597) #use the function as recommended to set the wts
+  #simulated copy of the population
+  medians[i] <- median(out)
+  #for the confidence interval; keep track of the variances
+  variance[i] <- var(out)
+  }
+medians <- data.frame(medians)
+#View(medians)
+pointest <- sum(medians)/500
+pointest
+
+#Find the 95% confidence interval
+avgvar <- sum(variance)/500
+se <- sqrt(avgvar)
+upper <- pointest + (se*1.96) #use 1.96 for 95% confidence
+lower <- pointest - (se*1.96) #again use 0 because cannot be negative - lower bd
+lower; upper
+```
+
+From the output we see that the weighted polya sample gives us a point estimate of  235.8579 (in thousands of dollars) for 500 samples of size 30. Then the calculated 95% confidence interval is found to be [0, 494.8738] again in thousands of dollars.
+
+```{r}
+#Find average absolute error
+#To do this take the FULL dataset and find the median
+obspointest <- median(sales)
+#use pointest as the simulated point estimate
+mae <- function(error){
+    mean(abs(error))
+}
+error <- obspointest-pointest
+abserr <- mae(error)
+abserr
+```
+The average absolute error of the point estimate is output from the above code, and is approximately 0.858. In terms of the frequency of coverage of the interval estimate, since it was a 95% confidence interval, the simulated data coverage should hover right around 95%, as we saw with the other data. Although the weights changed the confidence interval, it would still maintain this frequency for the most part.

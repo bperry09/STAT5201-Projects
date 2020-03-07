@@ -1,0 +1,318 @@
+---
+title: "Stat 5201 - Assignment 2"
+author: "Bailey Perry"
+date: "October 2, 2017"
+output: pdf_document
+---
+# Textbook problems:
+General information -- Simple Probability Samples Exercises.
+
+## 1. Chapter 2 - Problem 1:
+Let N=6 and n=3, and assume all population values are known. The book has all of the tables laid out for the two sampling plans.
+
+###a) What is the value of ybar(U)?
+```{r}
+ybaru <- (98+102+154+133+190+175)/6
+ybaru
+```
+ybar(U) = sum(yi)/N = 142
+
+###b) Let ybar be the mean of the sample plans. Find E[ybar], Var(ybar), Bias(ybar), and MSE(ybar).
+
+E[ybar] for each sampling plan:
+```{r}
+plan1mu <- (mean(c(98,154,190))*1/8)+(mean(c(98,154,175))*1/8)+(mean(c(98,133,190))*1/8)+(mean(c(98,133,175))*1/8)+(mean(c(102,154,190))*1/8)+(mean(c(102,154,175))*1/8)+(mean(c(102,133,190))*1/8)+(mean(c(102,133,175))*1/8)
+plan1mu
+```
+
+```{r}
+plan2mu <- (mean(c(98,133,175))*1/4)+(mean(c(102,154,175))*1/2)+(mean(c(98,154,190))*1/4)
+plan2mu
+```
+Var(ybar) for each sampling plan:
+This is calculated by taking the product of (sample means-ybar(U))^2 and multiplying that by their associated probabilities, and then summing all of those values. This is seen below.
+```{r}
+plan1var <- (((147.33-plan1mu)^2)*1/8)+(((142.33-plan1mu)^2)*1/8)+(((140.33-plan1mu)^2)*1/8)+(((135.33-plan1mu)^2)*1/8)+(((148.67-plan1mu)^2)*1/8)+(((143.67-plan1mu)^2)*1/8)+(((141.67-plan1mu)^2)*1/8)+(((136.67-plan1mu)^2)*1/8)
+plan1var
+```
+```{r}
+plan2var <- (((135.33-plan2mu)^2)*1/4)+(((143.67-plan2mu)^2)*1/2)+(((147.33-plan2mu)^2)*1/4)
+plan2var
+```
+Bias(ybar) for each sampling plan:
+Bias(ybar)=E[ybar]-ybar(U), all values we have from above.
+```{r}
+p1bias <- plan1mu-ybaru
+p1bias
+```
+```{r}
+p2bias <- plan2mu-ybaru
+p2bias
+```
+MSE(ybar) for each sampling plan:
+MSE(ybar)=Var(ybar)+(Bias(ybar)^2)
+```{r}
+p1mse <- plan1var+(p1bias^2)
+p1mse
+```
+```{r}
+p2mse <- plan2var+(p2bias^2)
+p2mse
+```
+###c) Which sampling plan is better? Why?
+From all of the output above, we can clearly see that Plan 1 is better in this case. Not only is it closer to the true population mean, but it also has a smaller variance. More importantly, the mean squared error is smaller for plan 1, as is the bias value for plan 1. All of these point to plan 1 doing a better job of generalizing to the population, and thus it is the better sampling choice.
+
+## 2. Chapter 2 - Problem 2:
+
+###a) Find the probability of selection pi(i) for each unit i.
+1 is found in sample one and three, thus pi(1)=(1/8)+(1/4)= 3/8
+
+2 is found in sample two and four, thus pi(2)=(1/4)+(3/8)=5/8
+
+3 is found in sample one and two, thus pi(3)=(1/8)+(1/4)=3/8
+
+4 is found in sample three, four, and five, thus pi(4)=(1/8)+(1/8)+(3/8)=5/8
+
+5 is found in sample one and five, thus pi(5)=(1/8)+(1/8)=2/8
+
+6 is found in sample one, three, and four, thus pi(6)=(1/8)+(1/8)+(3/8)=5/8
+
+7 is found in sample two and five, thus pi(7)=(1/4)+(1/8)=3/8
+
+8 is found in sample two, three, four, and five, thus pi(8)=1-(1/8)=7/8
+
+###b) What is the sampling distribution of t(est)=8ybar?
+```{r}
+#First find the means for each of the 5 samples
+s1ybar <- (1+4+7+7)/4
+s2ybar <- (2+4+7+8)/4
+s3ybar <- (1+4+7+8)/4
+s4ybar <- (2+4+7+8)/4
+s5ybar <- (4+7+7+8)/4
+
+#Next, find their value for t=8(ybar)
+t1 <- s1ybar*8
+t1
+t2 <- s2ybar*8
+t2
+t3 <- s3ybar*8
+t3
+t4 <- s4ybar*8
+t4
+t5 <- s5ybar*8
+t5
+```
+From the above we notice that t2 and t4 both are equal to 42, thus we need to add their respective probabilities to find the overall distribution.
+
+t(i), P(t(i))
+
+38, P=1/8
+
+40, P=1/8
+
+42, P=5/8
+
+52, P=1/8
+
+## 3. Chapter 2 - Problem 6:
+University has 807 faculty members. Each one has a certain number of refereed publications. This problem is based on a SRS of 50 faculty members.
+
+###a) Plot the data using a histogram. Describe the shape of the data.
+```{r}
+x <- c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+y <- c(28, 4, 3, 4, 4, 2, 1, 0, 2, 1, 1)
+z <- rep.int(x,times=y)
+hist(z, nclass=11, xlim=c(0,12), ylim=c(0,30), right=FALSE, main="Refereed Publications by Faculty Members", xlab="Papers")
+```
+The shape of the data is right-skewed. Most of the professors have few to no refereed papers, and thus there is a high concentration in these low values. The value for zero papers is also much higher than any of the others.
+
+###b) Estimate the mean number of publications per faculty member, and give the SE for your estimate.
+```{r}
+estybar <- ((28/50)*0)+((4/50)*1)+((3/50)*2)+((4/50)*3)+((4/50)*4)+((2/50)*5)+((1/50)*6)+((0/50)*7)+((2/50)*8)+((1/50)*9)+((1/50)*10)
+estybar
+```
+From this, we see that the estimated mean number of publications per faculty member is 1.78 papers.
+
+Next we calculate the estimated variance, to then obtain standard error (the square root of the estimate). 
+```{r}
+estvar <- var(z)
+estvar
+
+#Thus we know that standard error=sqrt((estvar/n)*(1-n/N))
+paperse <- sqrt((estvar/50)*(1-(50/807)))
+paperse
+```
+###c) Do you think that ybar from (b) will be normally distributed? Why or why not?
+I do not believe that the mean estimate from (b) will be normally distributed. This is because the data is extremely skewed and has the largest proportion at 0 papers, and it does not seem to have any indications of normality. Although, it is important to consider that a larger sample size may allow the use of the central limit theorem and thus introduce normality to those plots.
+
+###d) Estimate the proportion of faculty members with no publications and give a 95% CI.
+```{r}
+#Sample proportion
+prop <- 28/50
+prop
+
+#Standard error of the proportion - use formula below
+#SEp = sqrt[p*( 1 - p )/ n-1] * sqrt[(1-(n/N))]
+sep <- sqrt((prop*(1-prop)/49))*sqrt(1-(50/807))
+sep
+
+#Now we need to find the critical value for the formula
+t <- qt(0.975, df=49)
+t
+```
+```{r}
+upper1 <- prop + sep*t
+lower1 <- prop - sep*t
+lower1; upper1
+```
+Thus, a 95% CI is the sample proportion +/- the critical value times the standard error of the sample proportion. In numbers that is: [0.422, 0.698]. Therefore the estimated proportion of faculty with no publications is 56%, and it falls within the range 95% of the time. 
+
+## 4. Chapter 2 - Problem 7:
+
+###a) Find a 95% CI for the percentage of entries that come from the South.
+```{r}
+#Sample proportion
+prop1 <-175/1000 
+prop1
+
+#Standard error of the proportion - use formula below
+#SEp = sqrt[p*( 1 - p )/ n]
+# Since the sample is sufficiently large, we use the above
+# adjusted formula
+sep1 <- sqrt((prop1*(1-prop1)/1000))
+sep1
+
+#Now we need to find the critical value for the formula
+t1 <- qt(0.975, df=999)
+t1
+```
+
+```{r}
+upper2 <- prop1 + sep1*t1
+lower2 <- prop1 - sep1*t1
+lower2; upper2
+```
+Thus, a 95% CI is the sample proportion +/- the critical value times the standard error of the sample proportion. In numbers that is: [0.1514, 0.1986]. Therefore the estimated percentage of entries from the South is 17.5%, and it falls within the given range 95% of the time.
+
+###b) Is there evidence from your CI that the percentage of entries from the South differs from the percentage of persons living in the South?
+Yes, there is evidence because the value 30.9% is not in the confidence interval. This suggests that there is a difference between the percentage of entries from the South, and the percentage of people living there.
+
+## 5. Consider a population of N=580 patients of a clinic. A quantity of interest is the percentage of patients that overdue for a vaccination.
+
+###(a) What sample size in a SRS(without replacement) would be necessary to estimate the proportion with 95% confidence and margin of error 0.10.
+```{r}
+#First find n0
+#We use p=0.5 since that maximizes the value and p isn't given
+n0 <- (((1.96^2)*0.5*(1-0.5))/0.10^2)
+n0
+
+#Then we can find n, set N=580, given above
+n <- n0/(1+(n0/580))
+n
+```
+The necessary sample size looks to be n=83, when rounded up to the nearest whole number. This value will meet the requirements.
+
+###(b) Suppose a SRSWR(with replacement) of size 120, yielded 27 whom were not overdue for vaccination. Give a 95% CI for the proportion of children not overdue for vaccination.
+```{r}
+prop2 <- 27/120
+prop2
+
+#Standard error of the proportion - use formula below
+#SEp = sqrt[p*( 1 - p )/ n-1] * sqrt[(1-(n/N))]
+sep2 <- sqrt((prop2*(1-prop2)/119))*sqrt(1-(120/580))
+sep2
+
+#Now we need to find the critical value for the formula
+t2 <- qt(0.975, df=119)
+t2
+```
+
+```{r}
+upper3 <- prop2 + sep2*t2
+lower3 <- prop2 - sep2*t2
+lower3; upper3
+```
+Thus, a 95% CI is the sample proportion +/- the critical value times the standard error of the sample proportion. In numbers that is: [0.1575, 0.2925]. Therefore the estimated proportion of children not overdue for vaccination was 22.5%, and it falls within the above range 95% of the time.
+
+## 6. In R or your favorite computing environment, write a program that can generate a simple random sample without replacement and calculate the usual 95% confidence interval for the population mean. 
+```{r}
+set.seed(123)
+pop <- rnorm(500)
+mu <- mean(pop)
+pvar <- var(pop)
+confup <- mu + sqrt(pvar)*1.96
+conflow <- mu - sqrt(pvar)*1.96
+conflow; confup
+```
+###Construct a population of size 500 for which the usual interval based on a sample of size 50 covers the true mean less than 50% of the time. Show this is true by considering the results from 500 random samples.
+```{r}
+samp <- sample(pop, 50)
+sampmu <- mean(samp)
+sampvar <- var(samp)
+#Need new z critical value for 50% confidence
+zstat <- qnorm(0.75) 
+sconfup <- sampmu + sqrt(sampvar)*zstat
+sconflow <- sampmu - sqrt(sampvar)*zstat
+sconflow; sconfup
+```
+```{r}
+set.seed(123)
+pop <- rnorm(500)
+meanest1<-function(y,n,R){
+  N<-length(y)
+  popmn<-mean(y)
+  ans<-rep(0,4)
+
+    for(i in 1:R){
+      smp<-sample(1:N,n)
+      ysmp<-y[smp]
+      estmn<-mean(ysmp)
+      abserr<-abs(estmn - popmn)
+      estvr<-(1 - n/N)*var(ysmp)/n
+      lwbd<-estmn - qnorm(0.75)*sqrt(estvr)
+      upbd<-estmn + qnorm(0.75)*sqrt(estvr)
+      if(lwbd <= popmn & popmn <= upbd) {cov<-1}
+      else {cov<-0}
+      ans<-ans + c(estmn,abserr,2*qnorm(0.75)*sqrt(estvr),cov)
+    }
+    ans<-round(ans/R,digits=3)
+    cat("  est ", "abserr  ", "length ", "freq of coverage","\n")
+    print(ans)
+    return(date())
+  }
+y<-pop
+meanest1(y,50,500)
+```
+
+###For extra credit, construct a population and give a mathematical argument that shows the ususal interval will cover only 10% of the time.
+```{r}
+set.seed(123)
+pop1 <- rnorm(500)
+```
+
+```{r}
+meanest1<-function(y,n,R){
+  N<-length(y)
+  popmn<-mean(y)
+  ans<-rep(0,4)
+
+    for(i in 1:R){
+      smp<-sample(1:N,n)
+      ysmp<-y[smp]
+      estmn<-mean(ysmp)
+      abserr<-abs(estmn - popmn)
+      estvr<-(1 - n/N)*var(ysmp)/n
+      lwbd<-estmn - qnorm(0.55)*sqrt(estvr)
+      upbd<-estmn + qnorm(0.55)*sqrt(estvr)
+      if(lwbd <= popmn & popmn <= upbd) {cov<-1}
+      else {cov<-0}
+      ans<-ans + c(estmn,abserr,2*qnorm(0.55)*sqrt(estvr),cov)
+    }
+    ans<-round(ans/R,digits=3)
+    cat("  est ", "abserr  ", "length ", "freq of coverage","\n")
+    print(ans)
+    return(date())
+  }
+y<-pop1
+meanest1(y,50,500)
+```
