@@ -1,6 +1,6 @@
 ---
 title: "Stat 5201 - Final Exam"
-author: "Bailey Perry, ID# 4895940"
+author: "Bailey Perry"
 date: "Due: December 18, 2017"
 header-includes:
     - \usepackage{fancyhdr}
