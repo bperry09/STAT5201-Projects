@@ -1,2 +1,14 @@
-# STAT5201-Projects
-Coursework for STAT 5201 (Sampling Methodology) at the University of Minnesota.
+```
+ _______  ___  __    _  ___  _______  _______   _______  _______  __   __  _______  ___      ___  __    _  _______ 
+|       ||   ||  |  | ||   ||       ||       | |       ||   _   ||  |_|  ||       ||   |    |   ||  |  | ||       |
+|    ___||   ||   |_| ||   ||_     _||    ___| |  _____||  |_|  ||       ||    _  ||   |    |   ||   |_| ||    ___|
+|   |___ |   ||       ||   |  |   |  |   |___  | |_____ |       ||       ||   |_| ||   |    |   ||       ||   | __ 
+|    ___||   ||  _    ||   |  |   |  |    ___| |_____  ||       ||       ||    ___||   |___ |   ||  _    ||   ||  |
+|   |    |   || | |   ||   |  |   |  |   |___   _____| ||   _   || ||_|| ||   |    |       ||   || | |   ||   |_| |
+|___|    |___||_|  |__||___|  |___|  |_______| |_______||__| |__||_|   |_||___|    |_______||___||_|  |__||_______|
+
+```
+
+# STAT5201 Projects
+
+Coursework/projects for STAT 5201 (Sampling Methodology) at the University of Minnesota. Focused on sampling in finite populations. Link to the course details here: http://users.stat.umn.edu/~gmeeden/classes/5201/.
